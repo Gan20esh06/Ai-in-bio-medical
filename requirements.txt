@@ -1,0 +1,48 @@
+# ==============================================================================
+# AI Silent Disease Predictor — Python Dependencies
+# ==============================================================================
+# Target: Python 3.11
+# Install:  pip install -r requirements.txt
+# ==============================================================================
+
+# --- Core UI ---
+streamlit>=1.30.0
+streamlit-option-menu>=0.3.6
+streamlit-lottie>=0.0.5
+
+# --- Computer Vision ---
+opencv-python-headless>=4.8.0
+mediapipe>=0.10.9
+
+# --- Audio / Voice analysis ---
+librosa>=0.10.1
+soundfile>=0.12.1
+
+# --- Numerical / Data ---
+numpy>=1.24.0
+pandas>=2.0.0
+
+# --- Machine Learning ---
+scikit-learn>=1.3.0
+joblib>=1.3.0
+imbalanced-learn>=0.11.0
+xgboost>=2.0.0
+lightgbm>=4.0.0
+optuna>=3.0.0
+
+# --- Explainability ---
+shap>=0.42.0
+
+# --- Visualisation ---
+plotly>=5.18.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# --- Architecture Diagram ---
+graphviz>=0.20.0
+
+# --- PDF Report Generation ---
+fpdf2>=2.7.6
+
+# --- Image handling ---
+Pillow>=10.0.0
