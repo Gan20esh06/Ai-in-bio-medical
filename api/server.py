@@ -246,7 +246,24 @@ def full_scan():
 
     # ── Merge features & Predict ──
     features = {**face_result, **voice_result}
-    prediction = predict_health_risk(features)
+
+    # Extract optional clinical data from predict form
+    predict_data = data.get("predict_data")
+    raw_clinical_override = None
+    if predict_data and isinstance(predict_data, dict):
+        app.logger.info("[full-scan] Received predict_data: %s", predict_data)
+        raw_clinical_override = {
+            "raw_age": float(predict_data.get("age", 35)) / 100.0,
+            "raw_sex": 1.0 if predict_data.get("gender") == "male" else 0.0,
+            "raw_bp": float(predict_data.get("blood_pressure", 120)) / 200.0,
+            "raw_cholesterol": float(predict_data.get("cholesterol", 180)) / 300.0,
+            "raw_glucose": float(predict_data.get("glucose", 90)) / 200.0,
+            "raw_bmi": float(predict_data.get("bmi", 24)) / 50.0,
+            "raw_smoking": 1.0 if predict_data.get("smoking") else 0.0,
+            "raw_exercise": float(predict_data.get("exercise", 1)) / 3.0,
+        }
+
+    prediction = predict_health_risk(features, raw_clinical_override=raw_clinical_override)
 
     if "error" in prediction and prediction.get("overall_risk") is None:
         prediction["step"] = "prediction"

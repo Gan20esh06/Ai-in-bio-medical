@@ -190,6 +190,7 @@ export default function FaceScan() {
       setFaceValidated(true);
       setError(null);
       // Store face data in context for later use
+      console.log("[FaceScan] Biomarkers stored:", bio, "Result:", data);
       setFaceData({ image: imageDataUrl, result: data, biomarkers: bio });
     } catch (err) {
       console.error("Face scan error:", err);

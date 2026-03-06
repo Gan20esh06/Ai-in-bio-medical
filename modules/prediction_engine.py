@@ -189,7 +189,8 @@ def _detect_n_features(model: Any) -> int:
 # PUBLIC API
 # ==============================================================================
 
-def predict_health_risk(features: Dict[str, float]) -> Dict[str, Any]:
+def predict_health_risk(features: Dict[str, float],
+                        raw_clinical_override: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
     """Predict overall health risk from fused biomarker features.
 
     Parameters
@@ -197,6 +198,9 @@ def predict_health_risk(features: Dict[str, float]) -> Dict[str, Any]:
     features : dict
         Must contain all keys listed in ``config.settings.FEATURE_NAMES``,
         each mapping to a numeric value.
+    raw_clinical_override : dict, optional
+        If provided, use these pre-normalized clinical values instead of
+        estimating them from biomarkers. Keys should match RAW_CLINICAL_FEATURES.
 
     Returns
     -------
@@ -231,8 +235,17 @@ def predict_health_risk(features: Dict[str, float]) -> Dict[str, Any]:
                 dtype=np.float64,
             ).reshape(1, -1)
 
-            # Estimate raw clinical features from biomarkers
-            raw_clinical = _estimate_raw_clinical(features)
+            # Estimate raw clinical features from biomarkers (or use override)
+            if raw_clinical_override:
+                raw_clinical = {k: float(np.clip(v, 0, 1)) for k, v in raw_clinical_override.items()}
+                # Fill any missing keys with estimates
+                estimated = _estimate_raw_clinical(features)
+                for k in RAW_CLINICAL_FEATURES:
+                    if k not in raw_clinical:
+                        raw_clinical[k] = estimated[k]
+                logger.info("Using real clinical data override: %s", raw_clinical)
+            else:
+                raw_clinical = _estimate_raw_clinical(features)
 
             # Compute clinical cross-interaction features
             clinical_cross = _compute_clinical_cross(features, raw_clinical)

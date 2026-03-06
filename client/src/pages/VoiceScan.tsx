@@ -249,6 +249,12 @@ export default function VoiceScan() {
   }, [isRecording]);
 
   const handleProceed = () => {
+    console.log(
+      "[VoiceScan] Audio stored. sampleRate:",
+      audioSampleRate,
+      "hasAudio:",
+      !!capturedAudio,
+    );
     setVoiceData({ audio: capturedAudio, sampleRate: audioSampleRate });
     setLocation("/processing");
   };

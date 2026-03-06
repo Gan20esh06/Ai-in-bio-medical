@@ -1,52 +1,30 @@
 /**
  * Prediction.tsx — Disease Prediction page.
- * Renders the health form, manages loading/error state,
- * calls the API, and shows the result card.
+ * Collects health form data, saves it to context,
+ * then navigates to the Face Scan step.
  */
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { BrainCircuit, ShieldCheck, Lock, ChevronRight } from "lucide-react";
 import PredictionForm from "@/components/PredictionForm";
-import ResultCard from "@/components/ResultCard";
-import Loader from "@/components/Loader";
-import {
-  predictFromForm,
-  type HealthFormData,
-  type PredictionResponse,
-} from "@/services/api";
-
-type Phase = "form" | "loading" | "result";
+import { useScanResults } from "@/context/ScanContext";
+import type { HealthFormData } from "@/services/api";
 
 export default function Prediction() {
-  const [phase, setPhase] = useState<Phase>("form");
-  const [result, setResult] = useState<PredictionResponse | null>(null);
-  const [formData, setFormData] = useState<HealthFormData | null>(null);
+  const [, setLocation] = useLocation();
+  const { setPredictData, clearResults } = useScanResults();
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (data: HealthFormData) => {
-    setFormData(data);
+  const handleSubmit = (data: HealthFormData) => {
     setError(null);
-    setPhase("loading");
-
-    try {
-      const res = await predictFromForm(data);
-      setResult(res);
-      setPhase("result");
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "Prediction failed. Please try again.";
-      setError(msg);
-      setPhase("form");
-    }
-  };
-
-  const handleRetry = () => {
-    setResult(null);
-    setFormData(null);
-    setError(null);
-    setPhase("form");
+    // Clear any previous scan results
+    clearResults();
+    // Save predict form data into context
+    setPredictData(data);
+    console.log("[Prediction] Form data saved to context:", data);
+    // Navigate to face scan step
+    setLocation("/face-scan");
   };
 
   return (
@@ -88,70 +66,19 @@ export default function Prediction() {
 
         {/* ── Phase transitions ── */}
         <AnimatePresence mode="wait">
-          {phase === "form" && (
-            <motion.div
-              key="form"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <PredictionForm
-                onSubmit={handleSubmit}
-                loading={false}
-                error={error}
-              />
-            </motion.div>
-          )}
-
-          {phase === "loading" && (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="glass-card rounded-2xl border border-black/5 p-8"
-            >
-              <Loader message="Analyzing health data using AI…" />
-
-              {/* Steps indicator */}
-              <div className="flex justify-center gap-8 mt-4">
-                {[
-                  "Preprocessing features",
-                  "Running ML model",
-                  "Generating report",
-                ].map((step, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 + i * 0.6 }}
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground"
-                  >
-                    <ChevronRight className="w-3 h-3 text-primary" />
-                    {step}
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {phase === "result" && result && formData && (
-            <motion.div
-              key="result"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ResultCard
-                result={result}
-                form={formData}
-                onRetry={handleRetry}
-              />
-            </motion.div>
-          )}
+          <motion.div
+            key="form"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PredictionForm
+              onSubmit={handleSubmit}
+              loading={false}
+              error={error}
+            />
+          </motion.div>
         </AnimatePresence>
       </div>
     </div>

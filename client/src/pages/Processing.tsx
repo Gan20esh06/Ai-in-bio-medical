@@ -27,7 +27,7 @@ const stages = [
 
 export default function Processing() {
   const [, setLocation] = useLocation();
-  const { faceData, voiceData, setResults } = useScanResults();
+  const { predictData, faceData, voiceData, setResults } = useScanResults();
 
   const [progress, setProgress] = useState(0);
   const [currentStage, setCurrentStage] = useState(0);
@@ -41,6 +41,8 @@ export default function Processing() {
   faceRef.current = faceData;
   const voiceRef = useRef(voiceData);
   voiceRef.current = voiceData;
+  const predictRef = useRef(predictData);
+  predictRef.current = predictData;
   const setResultsRef = useRef(setResults);
   setResultsRef.current = setResults;
   const setLocationRef = useRef(setLocation);
@@ -68,14 +70,33 @@ export default function Processing() {
     // API call
     (async () => {
       try {
+        const payload = {
+          image: faceRef.current?.image || undefined,
+          audio: voiceRef.current?.audio || undefined,
+          sampleRate: voiceRef.current?.sampleRate || 22050,
+          predict_data: predictRef.current
+            ? {
+                age: predictRef.current.age,
+                gender: predictRef.current.gender,
+                blood_pressure: predictRef.current.bloodPressure,
+                cholesterol: predictRef.current.cholesterol,
+                glucose: predictRef.current.glucose,
+                bmi: predictRef.current.bmi,
+                smoking: predictRef.current.smoking,
+                exercise: predictRef.current.exercise,
+              }
+            : undefined,
+        };
+        console.log("[Processing] Sending to /api/full-scan:", {
+          hasImage: !!payload.image,
+          hasAudio: !!payload.audio,
+          sampleRate: payload.sampleRate,
+          predict_data: payload.predict_data,
+        });
         const res = await fetch("/api/full-scan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            image: faceRef.current?.image || undefined,
-            audio: voiceRef.current?.audio || undefined,
-            sampleRate: voiceRef.current?.sampleRate || 22050,
-          }),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
         if (data.error) {
@@ -129,6 +150,7 @@ export default function Processing() {
                 prediction: apiData.prediction,
                 timestamp: new Date().toISOString(),
               };
+              console.log("[Processing] API response received:", r);
               setResultsRef.current(r);
               setTimeout(() => {
                 if (!cancelled) setLocationRef.current("/dashboard");
